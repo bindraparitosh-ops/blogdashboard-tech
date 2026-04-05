@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/api/generate", "dest": "/api/generate.js" },
+    { "src": "/api/publish",  "dest": "/api/publish.js"  },
+    { "src": "/api/blogs",    "dest": "/api/blogs.js"    },
+    { "src": "/(.*)",         "dest": "/public/index.html" }
+  ]
+}
