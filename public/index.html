@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Blog Dashboard — 100ampere · ctrl8 · blackkey</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --text2: #a0a0a0;
+    --text3: #666;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --brand: #F5A623;
+    --brand-text: #0A0A0A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  /* Layout */
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--surface); border-right: 0.5px solid var(--border); padding: 0; display: flex; flex-direction: column; }
+  .main { overflow-y: auto; }
+
+  /* Sidebar */
+  .sidebar-header { padding: 20px 18px 16px; border-bottom: 0.5px solid var(--border); }
+  .sidebar-logo { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--brand); }
+  .sidebar-sub { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+  .brand-list { padding: 12px 10px; flex: 1; }
+  .brand-section-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; padding: 6px 8px 4px; }
+  .brand-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 2px; transition: background 0.12s; border: 0.5px solid transparent; }
+  .brand-item:hover { background: var(--surface2); }
+  .brand-item.active { background: var(--surface2); border-color: var(--border2); }
+  .brand-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .brand-info .bn { font-size: 13px; font-weight: 500; }
+  .brand-info .bd { font-size: 10px; color: var(--text3); }
+
+  .sidebar-nav { padding: 10px; border-top: 0.5px solid var(--border); }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; color: var(--text2); margin-bottom: 2px; transition: all 0.12s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--surface2); color: var(--text); }
+  .nav-icon { width: 16px; text-align: center; font-size: 13px; }
+
+  /* Main header */
+  .main-header { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .main-title { font-size: 15px; font-weight: 600; }
+  .main-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .header-badges { display: flex; gap: 6px; }
+  .hb { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .hb-aeo { background: #1a3d0a; color: #7ed44e; }
+  .hb-seo { background: #0a2040; color: #60a5fa; }
+  .hb-eeat { background: #3d0a20; color: #f472b6; }
+
+  /* Content area */
+  .content { padding: 24px; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
+  .card-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+
+  /* Form elements */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 5px; }
+  select, input[type=text], input[type=url], textarea {
+    width: 100%; padding: 8px 11px;
+    background: var(--surface2); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 13px;
+    outline: none; transition: border-color 0.15s;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--brand); }
+  textarea { resize: vertical; min-height: 120px; font-family: inherit; line-height: 1.6; }
+
+  /* Tags */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+  .tag { background: var(--surface2); border: 0.5px solid var(--border); border-radius: 20px; font-size: 11px; padding: 3px 10px; color: var(--text2); cursor: pointer; transition: all 0.12s; user-select: none; }
+  .tag.sel { background: var(--brand); color: var(--brand-text); border-color: var(--brand); font-weight: 500; }
+
+  /* Buttons */
+  .btn { padding: 9px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--brand); color: var(--brand-text); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 0.5px solid var(--border2); }
+  .btn-success { background: #166534; color: #bbf7d0; }
+  .btn-danger { background: #7f1d1d; color: #fca5a5; }
+  .btn-full { width: 100%; padding: 11px; margin-top: 6px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+
+  /* Status toggle */
+  .status-toggle { display: flex; gap: 0; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; }
+  .status-opt { flex: 1; padding: 7px; text-align: center; cursor: pointer; font-size: 12px; color: var(--text2); transition: all 0.12s; border: none; background: none; }
+  .status-opt.active { background: var(--brand); color: var(--brand-text); font-weight: 500; }
+
+  /* Output area */
+  .output-area { background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-size: 12px; line-height: 1.7; color: var(--text); white-space: pre-wrap; max-height: 500px; overflow-y: auto; margin-top: 12px; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .output-placeholder { color: var(--text3); font-style: italic; font-family: inherit; }
+
+  /* Loading */
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 6px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast notifications */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+  .toast { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; max-width: 360px; animation: slideIn 0.2s ease; border: 0.5px solid; }
+  .toast-success { background: #052e16; border-color: #166534; color: #bbf7d0; }
+  .toast-error { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
+  .toast-info { background: #0c1a2e; border-color: #1e40af; color: #93c5fd; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* Published posts table */
+  .posts-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .posts-table th { text-align: left; padding: 8px 10px; color: var(--text3); font-weight: 500; border-bottom: 0.5px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; }
+  .posts-table td { padding: 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  .posts-table tr:last-child td { border-bottom: none; }
+  .posts-table tr:hover td { background: var(--surface2); }
+  .status-pill { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+  .status-published { background: #052e16; color: #4ade80; }
+  .status-draft { background: #1c1400; color: #fbbf24; }
+  .link-btn { color: var(--brand); text-decoration: none; font-size: 11px; }
+  .link-btn:hover { text-decoration: underline; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+  .stat-val { font-size: 24px; font-weight: 600; }
+  .stat-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* Publish result */
+  .publish-result { background: #052e16; border: 0.5px solid #166534; border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 12px; }
+  .publish-result h4 { color: #4ade80; font-size: 13px; margin-bottom: 8px; }
+  .publish-result a { color: #86efac; font-size: 12px; display: block; margin-top: 4px; }
+
+  /* Env check */
+  .env-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 12px; }
+  .env-row:last-child { border-bottom: none; }
+  .env-key { color: var(--text2); font-family: monospace; font-size: 11px; }
+  .env-status { font-size: 10px; padding: 2px 7px; border-radius: 10px; }
+  .env-set { background: #052e16; color: #4ade80; }
+  .env-missing { background: #450a0a; color: #fca5a5; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* View sections */
+  .view { display: none; }
+  .view.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">BLOGDASHBOARD</div>
+      <div class="sidebar-sub">blogdashboard.tech</div>
+    </div>
+
+    <div class="brand-list">
+      <div class="brand-section-label">Active Brand</div>
+      <div class="brand-item active" data-brand="100ampere" onclick="switchBrand('100ampere',this)">
+        <div class="brand-dot" style="background:#F5A623;"></div>
+        <div class="brand-info"><div class="bn">100ampere</div><div class="bd">100ampere.com</div></div>
+      </div>
+      <div class="brand-item" data-brand="ctrl8" onclick="switchBrand('ctrl8',this)">
+        <div class="brand-dot" style="background:#378ADD;"></div>
+        <div class="brand-info"><div class="bn">ctrl8</div><div class="bd">ctrl8.in</div></div>
+      </div>
+      <div class="brand-item" data-brand="blackkey" onclick="switchBrand('blackkey',this)">
+        <div class="brand-dot" style="background:#888780;"></div>
+        <div class="brand-info"><div class="bn">blackkey</div><div class="bd">blackkey.in</div></div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showView('generate',this)"><span class="nav-icon">✍️</span> Generate Blog</button>
+      <button class="nav-item" onclick="showView('publish',this)"><span class="nav-icon">🚀</span> Review & Publish</button>
+      <button class="nav-item" onclick="showView('posts',this)"><span class="nav-icon">📋</span> Published Posts</button>
+      <button class="nav-item" onclick="showView('settings',this)"><span class="nav-icon">⚙️</span> Settings</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-header">
+      <div>
+        <div class="main-title" id="main-title">Generate Blog — 100ampere.com</div>
+        <div class="main-sub" id="main-sub">AEO + SEO + E-E-A-T · Industry-standard output · Direct Shopify publishing</div>
+      </div>
+      <div class="header-badges">
+        <span class="hb hb-aeo">AEO</span>
+        <span class="hb hb-seo">SEO</span>
+        <span class="hb hb-eeat">E-E-A-T</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══ VIEW: GENERATE ═══ -->
+      <div class="view active" id="view-generate">
+
+        <div class="card">
+          <div class="card-title">Blog Configuration</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Blog type</label>
+              <select id="blog-type">
+                <option value="launch">New Product Launch Coverage</option>
+                <option value="search">Consumer Search Behaviour</option>
+                <option value="features">Product Feature Deep-dive</option>
+                <option value="tier34">Tier 3/4 Town Buyer Guide</option>
+                <option value="comparison">Value Comparison Guide</option>
+                <option value="gifting">Gifting Guide</option>
+                <option value="trend">Tech Trend Story</option>
+                <option value="howto">How-To / Explainer</option>
+                <option value="competitor_gap">Competitor Gap Blog</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Language</label>
+              <select id="blog-lang">
+                <option value="English">English</option>
+                <option value="Hindi">Hindi (हिंदी)</option>
+                <option value="Tamil">Tamil (தமிழ்)</option>
+                <option value="Telugu">Telugu (తెలుగు)</option>
+                <option value="Bengali">Bengali (বাংলা)</option>
+                <option value="Marathi">Marathi (मराठी)</option>
+                <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
+                <option value="Malayalam">Malayalam (മലയാളം)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Product category</label>
+              <select id="product-cat"></select>
+            </div>
+            <div class="form-group">
+              <label>Target audience</label>
+              <select id="target-audience"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Word count</label>
+              <select id="word-count">
+                <option value="1500">1500 words — standard daily</option>
+                <option value="2000">2000 words — pillar content</option>
+                <option value="2500">2500+ words — topic cluster anchor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Content depth</label>
+              <select id="content-depth">
+                <option value="standard">Standard — broad + engaging</option>
+                <option value="technical">Technical — feature deep-dive</option>
+                <option value="beginner">Beginner — simple & educational</option>
+                <option value="listicle">Listicle — numbered list format</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Primary keyword / topic (optional)</label>
+            <input type="text" id="custom-keywords" placeholder="e.g. best earbuds under 500 India 2025" />
+          </div>
+          <div class="form-group">
+            <label>Search platform optimisation</label>
+            <div class="tag-row" id="platform-tags">
+              <span class="tag sel" onclick="this.classList.toggle('sel')">Google</span>
+              <span class="tag sel" onclick="this.classList.toggle('sel')">ChatGPT</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Gemini</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Perplexity</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Bing</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Content angle</label>
+            <div class="tag-row" id="angle-tags">
+              <span class="tag sel" onclick="this.classList.toggle('sel')">Price-value story</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Design innovation</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Tier 3/4 buyer</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Festival season</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Expert how-to</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Schema elements</label>
+            <div class="tag-row" id="schema-tags">
+              <span class="tag sel" onclick="this.classList.toggle('sel')">FAQ Schema</span>
+              <span class="tag sel" onclick="this.classList.toggle('sel')">Article Schema</span>
+              <span class="tag sel" onclick="this.classList.toggle('sel')">Author Bio</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">HowTo Schema</span>
+              <span class="tag" onclick="this.classList.toggle('sel')">Product Schema</span>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" id="gen-btn" onclick="generateBlog()">
+            Generate Industry-Standard Blog Post
+          </button>
+        </div>
+
+        <div class="card" id="output-card" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div class="card-title" style="margin-bottom:0;">Generated Blog Post</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-secondary" onclick="copyOutput()">Copy</button>
+              <button class="btn btn-success" onclick="goToPublish()">Review & Publish →</button>
+            </div>
+          </div>
+          <div class="output-area" id="output-area"><span class="output-placeholder">Your blog post will appear here...</span></div>
+        </div>
+      </div>
+
+      <!-- ═══ VIEW: PUBLISH ═══ -->
+      <div class="view" id="view-publish">
+        <div class="card">
+          <div class="card-title">Review Before Publishing</div>
+
+          <div class="form-group">
+            <label>SEO Title (under 60 chars) <span id="title-count" style="color:var(--text3);">0/60</span></label>
+            <input type="text" id="pub-title" placeholder="Best Earbuds Under ₹500 India 2025 | Discover Top Picks" oninput="countChars('pub-title','title-count',60)" />
+          </div>
+          <div class="form-group">
+            <label>Meta Description (under 160 chars) <span id="desc-count" style="color:var(--text3);">0/160</span></label>
+            <input type="text" id="pub-meta-desc" placeholder="Find the best earbuds under ₹500 in India. Expert picks. Shop at 100ampere.com" oninput="countChars('pub-meta-desc','desc-count',160)" />
+          </div>
+          <div class="form-group">
+            <label>URL Slug</label>
+            <input type="text" id="pub-slug" placeholder="best-earbuds-under-500-india-2025" />
+          </div>
+          <div class="form-group">
+            <label>Author Name</label>
+            <input type="text" id="pub-author" placeholder="100ampere Editorial Team" />
+          </div>
+          <div class="form-group">
+            <label>Shopify Tags (comma separated)</label>
+            <input type="text" id="pub-tags" placeholder="earbuds, budget earbuds India, TWS earbuds 2025, wireless earbuds" />
+          </div>
+          <div class="form-group">
+            <label>Featured Image URL (optional)</label>
+            <input type="url" id="pub-image" placeholder="https://cdn.shopify.com/your-image.jpg" />
+          </div>
+          <div class="form-group">
+            <label>Blog Body (Markdown — editable before publishing)</label>
+            <textarea id="pub-body" rows="16"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Publish status</label>
+            <div class="status-toggle">
+              <button class="status-opt active" id="status-draft" onclick="setStatus('draft')">Save as Draft</button>
+              <button class="status-opt" id="status-published" onclick="setStatus('published')">Publish Live</button>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="showView('generate', document.querySelector('.nav-item'))">← Back to Generate</button>
+            <button class="btn btn-success" id="pub-btn" onclick="publishToShopify()" style="flex:1;">
+              🚀 Publish to Shopify — <span id="pub-brand-label">100ampere.com</span>
+            </button>
+          </div>
+          <div id="publish-result" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- ═══ VIEW: POSTS ═══ -->
+      <div class="view" id="view-posts">
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card"><div class="stat-val" id="stat-total">—</div><div class="stat-lbl">Total posts</div></div>
+          <div class="stat-card"><div class="stat-val" id="stat-published">—</div><div class="stat-lbl">Published</div></div>
+          <div class="stat-card"><div class="stat-val" id="stat-draft">—</div><div class="stat-lbl">Drafts</div></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="card-title" style="margin-bottom:0;">Recent Posts — <span id="posts-brand">100ampere.com</span></div>
+            <button class="btn btn-secondary" onclick="loadPosts()">Refresh</button>
+          </div>
+          <div id="posts-container"><div style="color:var(--text3);font-size:13px;">Loading posts...</div></div>
+        </div>
+      </div>
+
+      <!-- ═══ VIEW: SETTINGS ═══ -->
+      <div class="view" id="view-settings">
+        <div class="card">
+          <div class="card-title">Environment Variables — Vercel Setup</div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.7;">
+            These variables must be added to your Vercel project under <strong>Settings → Environment Variables</strong>.
+            Your tokens are stored securely in Vercel — never in this code.
+          </p>
+          <div id="env-checklist"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">API Endpoint Status</div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="testEndpoints()">Test All Endpoints</button>
+          </div>
+          <div id="endpoint-status" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Store Configuration</div>
+          <table class="posts-table">
+            <thead><tr><th>Brand</th><th>Domain</th><th>Blog ID</th><th>Scopes needed</th></tr></thead>
+            <tbody>
+              <tr><td>100ampere</td><td>100ampere.myshopify.com</td><td>—</td><td><code>write_content, read_content</code></td></tr>
+              <tr><td>ctrl8</td><td>ctrl8.myshopify.com</td><td>120374526231</td><td><code>write_content, read_content</code></td></tr>
+              <tr><td>blackkey</td><td>blackkey.myshopify.com</td><td>—</td><td><code>write_content, read_content</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════
+// BRAND DATABASE
+// ═══════════════════════════════════════
+const BRANDS_DB = {
+  '100ampere': {
+    name:'100ampere', domain:'100ampere.com', color:'#F5A623', blogUrl:'https://100ampere.com/blogs/news',
+    tagline:'Electronics accessories ₹299–₹699',
+    categories:[{val:'earbuds',label:'Earbuds'},{val:'powerbanks',label:'Power Banks'},{val:'headphones',label:'Headphones'},{val:'cables',label:'Cables & Chargers'},{val:'all',label:'All Categories'}],
+    audiences:['Budget-conscious urban youth','Tier 3/4 town first-time buyers','Students (18–24)','Working professionals','Gifting occasion buyers'],
+    primaryKeywords:['best earbuds under 500 India 2025','budget TWS earbuds India','wireless earbuds under 699 India','best power bank under 500 India','affordable headphones India'],
+    lsiKeywords:['ANC earbuds India','Bluetooth 5.3 earbuds','30 hour battery earbuds','IPX4 waterproof earbuds','TWS earbuds India'],
+    localKeywords:['earbuds under 500 Nagpur','budget earbuds Surat','wireless earbuds Coimbatore','earbuds Bhopal','headphones Varanasi'],
+    negativeKeywords:'boAt, Noise, Sony, JBL, Samsung, Apple, Xiaomi, Realme, OnePlus, Anker, Baseus, pTron, Ambrane',
+    externalSources:['IDC India TWS market report','ICEA India','91mobiles India','GadgetsNow India','Economic Times Tech'],
+    links:{ homepage:'https://100ampere.com', collections:{ earbuds:'https://100ampere.com/collections/earbuds',powerbanks:'https://100ampere.com/collections/power-banks',headphones:'https://100ampere.com/collections/headphones',cables:'https://100ampere.com/collections/cables-chargers',all:'https://100ampere.com/collections/all',newArrivals:'https://100ampere.com/collections/new-arrivals',bestSellers:'https://100ampere.com/collections/best-sellers' }, pages:{ about:'https://100ampere.com/pages/about-us',blog:'https://100ampere.com/blogs/news',contact:'https://100ampere.com/pages/contact' } },
+    priceRange:'₹299–₹699', voice:'friendly, value-focused, Indian youth-oriented, energetic',
+    description:'D2C electronics accessories brand. Products: earbuds, power banks, headphones, cables at ₹299–₹699. Innovative designs, focus on customer experience.',
+  },
+  'ctrl8': {
+    name:'ctrl8', domain:'ctrl8.in', color:'#378ADD', blogUrl:'https://ctrl8.in/blogs/news',
+    tagline:'Tech gadgets & smart accessories ₹499–₹1,999',
+    categories:[{val:'gadgets',label:'Smart Gadgets'},{val:'audio',label:'Audio Accessories'},{val:'gaming',label:'Gaming Accessories'},{val:'productivity',label:'Productivity Tools'},{val:'all',label:'All Products'}],
+    audiences:['Tech enthusiasts','Young professionals (25–35)','Gamers & streamers','Tech-savvy students','Early adopters'],
+    primaryKeywords:['best tech gadgets India 2025','smart accessories India','gaming accessories under 1000 India','performance earbuds India','wireless gaming accessories India'],
+    lsiKeywords:['low latency gaming India','USB hub India','wireless charging pad India','Bluetooth 5.3 performance','multipoint earbuds India'],
+    localKeywords:['tech gadgets Bengaluru','gaming accessories Mumbai','smart accessories Delhi','productivity tools Hyderabad','tech gifts Pune'],
+    negativeKeywords:'boAt, Noise, Sony, JBL, Samsung, Apple, Xiaomi, Realme, OnePlus, Anker, Baseus, Razer, Logitech',
+    externalSources:['TechRadar India','91mobiles India','Digit India','GadgetsNow','AnandTech'],
+    links:{ homepage:'https://ctrl8.in', collections:{ gadgets:'https://ctrl8.in/collections/gadgets',audio:'https://ctrl8.in/collections/audio',gaming:'https://ctrl8.in/collections/gaming',productivity:'https://ctrl8.in/collections/productivity',all:'https://ctrl8.in/collections/all',newArrivals:'https://ctrl8.in/collections/new-arrivals',bestSellers:'https://ctrl8.in/collections/best-sellers' }, pages:{ about:'https://ctrl8.in/pages/about-us',blog:'https://ctrl8.in/blogs/news',contact:'https://ctrl8.in/pages/contact' } },
+    priceRange:'₹499–₹1,999', voice:'tech-savvy, performance-focused, analytical, confident',
+    description:'Tech gadgets and smart accessories for modern Indian tech enthusiasts. Focus on performance, innovation, and smart features.',
+  },
+  'blackkey': {
+    name:'blackkey', domain:'blackkey.in', color:'#888780', blogUrl:'https://blackkey.in/blogs/journal',
+    tagline:'Premium lifestyle tech ₹999–₹4,999',
+    categories:[{val:'audio',label:'Premium Audio'},{val:'lifestyle',label:'Lifestyle Accessories'},{val:'travel',label:'Travel Essentials'},{val:'workspace',label:'Workspace Collection'},{val:'all',label:'Full Collection'}],
+    audiences:['Urban professionals (25–40)','Design-conscious buyers','Premium gifting market','Corporate / executive buyers','Lifestyle consumers'],
+    primaryKeywords:['premium lifestyle accessories India 2025','designer tech accessories India','luxury earbuds India','premium travel accessories India','executive tech gifts India'],
+    lsiKeywords:['premium build quality India','ANC premium earbuds','leather tech accessories India','minimalist design accessories','premium wireless charging India'],
+    localKeywords:['premium accessories Mumbai','luxury tech gifts Delhi','designer accessories Bengaluru','premium lifestyle Hyderabad','executive gifts Pune'],
+    negativeKeywords:'boAt, Noise, Sony, JBL, Samsung, Apple, Xiaomi, Realme, OnePlus, Anker, Baseus, pTron',
+    externalSources:['Vogue India','GQ India','Forbes India','Mint Lounge','Condé Nast Traveller India'],
+    links:{ homepage:'https://blackkey.in', collections:{ audio:'https://blackkey.in/collections/premium-audio',lifestyle:'https://blackkey.in/collections/lifestyle',travel:'https://blackkey.in/collections/travel',workspace:'https://blackkey.in/collections/workspace',all:'https://blackkey.in/collections/all',newArrivals:'https://blackkey.in/collections/new-arrivals',bestSellers:'https://blackkey.in/collections/best-sellers' }, pages:{ about:'https://blackkey.in/pages/about-us',blog:'https://blackkey.in/blogs/journal',contact:'https://blackkey.in/pages/contact' } },
+    priceRange:'₹999–₹4,999', voice:'premium, design-forward, aspirational, sophisticated',
+    description:'Premium lifestyle tech and accessories for aspirational Indian consumers. Design excellence, craftsmanship, elevated everyday experience.',
+  },
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let activeBrand = '100ampere';
+let publishStatus = 'draft';
+let generatedBlogText = '';
+
+// ═══════════════════════════════════════
+// BRAND SWITCHING
+// ═══════════════════════════════════════
+function switchBrand(b, el) {
+  activeBrand = b;
+  const bd = BRANDS_DB[b];
+  document.querySelectorAll('.brand-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('main-title').textContent = `Generate Blog — ${bd.domain}`;
+  document.getElementById('pub-brand-label').textContent = bd.domain;
+  document.getElementById('posts-brand').textContent = bd.domain;
+  // Update gen button colour
+  const genBtn = document.getElementById('gen-btn');
+  genBtn.style.background = bd.color;
+  genBtn.style.color = b === '100ampere' ? '#0A0A0A' : '#fff';
+  // Categories
+  document.getElementById('product-cat').innerHTML = bd.categories.map(c=>`<option value="${c.val}">${c.label}</option>`).join('');
+  // Audiences
+  document.getElementById('target-audience').innerHTML = bd.audiences.map(a=>`<option>${a}</option>`).join('');
+  // Placeholder
+  document.getElementById('custom-keywords').placeholder = `e.g. ${bd.primaryKeywords[0]}`;
+  // Default author
+  document.getElementById('pub-author').placeholder = `${bd.name} Editorial Team`;
+  showToast(`Switched to ${bd.domain}`, 'info');
+}
+
+// ═══════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════
+function showView(view, navEl) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  if (view === 'posts') loadPosts();
+  if (view === 'settings') renderSettings();
+}
+
+// ═══════════════════════════════════════
+// GENERATE BLOG
+// ═══════════════════════════════════════
+function getSel(id) {
+  return [...document.querySelectorAll('#'+id+' .tag.sel')].map(t=>t.textContent).join(', ') || 'None';
+}
+
+const INDUSTRY_FRAMEWORK = `
+APPLY ALL RULES BELOW — NO EXCEPTIONS:
+
+LANGUAGE (SEO):
+• Conversational long-tail phrases: "What is the best way to...", "How do I choose...", "Which one works best for..."
+• Definitive authoritative language: "is defined as," "refers to," "proven to," "is crucial for," "means that"
+• Semantic keywords — related terms, synonyms, variations. Never repeat the exact same keyword more than 3 times.
+• Transition words: "because," "for example," "however," "as a result," "which means," "therefore"
+
+STRUCTURE (AEO):
+• H1: One only — keyword-fronted, under 60 chars, actionable verb (Discover/Find/Learn/Best)
+• H2s: ALL must be QUESTIONS ("What Are...?", "How Does...?", "Which...?", "Why...?")
+• H3s: sub-answers or specific breakdowns under each H2
+• ANSWER-FIRST BLOCKS: 40–60 word direct answer immediately after every H2 and H3, BEFORE elaborating
+• Paragraphs: max 2–3 sentences each
+• At least ONE numbered list per post
+• At least ONE comparison table per post
+
+GENERATIVE ENGINE (GEO):
+• Entity density 20%+: Indian cities (Nagpur, Surat, Coimbatore, Bhopal, Varanasi, Jaipur, Indore), product specs (Bluetooth 5.3, ANC, ENC, TWS, IPX4, USB-C), price points, technology terms
+• Every H2 section must be self-contained — AI must be able to quote it alone
+• WHO/WHAT/WHEN/WHERE/WHY/HOW answered throughout
+• Intro paragraph: hooks reader AND answers main query in first 2–3 sentences. No generic openers.
+
+E-E-A-T (TRUST):
+• 2+ real statistics with credible source attribution
+• 2 external links to high-authority sources woven naturally into body text
+• One story-based paragraph ("Imagine you're in Jaipur and your earbuds die...")
+• Author bio at end (2–3 lines, brand editorial team, expertise stated)
+• Brand mentioned naturally 4–6 times with specific product benefits and price points
+
+TECHNICAL:
+• Meta title: under 60 chars, keyword-first, actionable verb
+• Meta description: under 160 chars, keyword + CTA + brand URL
+• URL slug: short, hyphenated, keyword-first
+• 3 image placement markers: [IMAGE 1: description + ALT text], [IMAGE 2], [IMAGE 3]
+• 1 infographic concept suggestion
+• 1 video content idea
+
+BRAND SAFETY: ZERO competitor brand names anywhere. Use "premium brands," "market leaders," "brands at higher price points."`;
+
+const TYPE_MAP = {
+  launch: (bd) => `what is new in the ${bd.name} product range and the broader accessories market in 2025 — innovations, features, and why ${bd.name} at ${bd.priceRange} is the smart choice`,
+  search: (bd,p) => `how Indian consumers search for ${bd.categories[0].label.toLowerCase()} on ${p} — search intent, long-tail queries, voice search, AI chatbot queries, and how to find best value`,
+  features: (bd) => `a definitive feature explainer for ${bd.categories[0].label.toLowerCase()} — every spec that matters, written authoritatively for ${bd.audiences[0].toLowerCase()}`,
+  tier34: (bd) => `how consumers in Tier 3 and Tier 4 Indian towns discover, research, and buy ${bd.categories[0].label.toLowerCase()} — search behaviour, value priorities, and why ${bd.name} serves them best`,
+  comparison: (bd) => `an authoritative value comparison proving why ${bd.name} at ${bd.priceRange} delivers equal or better performance versus options costing 3–5x more`,
+  gifting: (bd) => `the definitive gifting guide for ${bd.name} products at ${bd.priceRange} — Diwali, birthdays, farewells, corporate gifting across India 2025`,
+  trend: (bd) => `an authoritative overview of latest technology trends shaping the Indian accessories market in 2025 and how ${bd.name} is positioned within them`,
+  howto: (bd) => `a practical expert-written how-to guide helping Indian buyers choose, set up, use, and get maximum value from ${bd.name} products`,
+  competitor_gap: (bd) => `a high-demand underserved topic in the Indian ${bd.categories[0].label.toLowerCase()} market — authoritative AEO-optimised answers positioning ${bd.name} as the best choice`,
+};
+
+function buildLinkBlock(bd, catVal, catLabel) {
+  const catLink = bd.links.collections[catVal] || bd.links.collections.all;
+  return `MANDATORY INTERNAL LINKS (embed as Markdown hyperlinks WITHIN sentences — never as a list):
+- [explore our ${catLabel} range](${catLink})
+- [new arrivals](${bd.links.collections.newArrivals})
+- [best sellers](${bd.links.collections.bestSellers})
+- [all products at ${bd.domain}](${bd.links.collections.all})
+- [about ${bd.name}](${bd.links.pages.about})
+- [contact our team](${bd.links.pages.contact})
+- [${bd.domain}](${bd.links.homepage})
+Use at least 5. Final CTA MUST include ${catLink} and ${bd.links.homepage}.`;
+}
+
+async function generateBlog() {
+  const bd = BRANDS_DB[activeBrand];
+  const typeVal = document.getElementById('blog-type').value;
+  const lang = document.getElementById('blog-lang').value;
+  const catSel = document.getElementById('product-cat');
+  const catVal = catSel.value;
+  const catLabel = catSel.options[catSel.selectedIndex]?.text || 'All';
+  const audience = document.getElementById('target-audience').value;
+  const platforms = getSel('platform-tags');
+  const angles = getSel('angle-tags');
+  const schema = getSel('schema-tags');
+  const keywords = document.getElementById('custom-keywords').value.trim();
+  const wordcount = document.getElementById('word-count').value;
+  const depth = document.getElementById('content-depth').value;
+  const topicDesc = typeVal === 'search' ? TYPE_MAP[typeVal](bd, platforms) : (TYPE_MAP[typeVal] ? TYPE_MAP[typeVal](bd) : TYPE_MAP.launch(bd));
+  const langNote = lang !== 'English' ? `Write ENTIRE blog in ${lang} script. Embed product names, prices, URLs, SEO terms in English within the ${lang} text.` : `Write in clear, authoritative, ${bd.voice} English for Indian readers.`;
+  const linkBlock = buildLinkBlock(bd, catVal, catLabel);
+
+  const prompt = `Generate a complete publish-ready industry-standard blog post for ${bd.domain}.
+
+BRAND: ${bd.name} | ${bd.domain} | ${bd.priceRange} | Voice: ${bd.voice}
+DESCRIPTION: ${bd.description}
+AUDIENCE: ${audience}
+PRIMARY KEYWORDS: ${bd.primaryKeywords.slice(0,5).join(', ')}
+LSI KEYWORDS: ${bd.lsiKeywords.slice(0,5).join(', ')}
+LOCAL KEYWORDS: ${bd.localKeywords.slice(0,4).join(', ')}
+EXTERNAL SOURCES FOR E-E-A-T: ${bd.externalSources.join(', ')}
+NEGATIVE KEYWORDS (NEVER USE): ${bd.negativeKeywords}
+
+TOPIC: ${topicDesc}
+CATEGORY: ${catLabel} | LANGUAGE: ${lang} | ${langNote}
+PLATFORMS: ${platforms} | ANGLE: ${angles} | DEPTH: ${depth} | SCHEMA: ${schema}
+${keywords ? 'PRIMARY KEYWORD OVERRIDE: '+keywords : ''}
+WORD COUNT: ${wordcount}+ words minimum
+
+${linkBlock}
+
+${INDUSTRY_FRAMEWORK}
+
+OUTPUT ALL 12 SECTIONS IN ORDER:
+1. SUGGESTED URL SLUG
+2. SEO META TITLE (under 60 chars)
+3. META DESCRIPTION (under 160 chars, CTA + ${bd.domain})
+4. PRIMARY KEYWORD + 8–10 SEMANTIC/LSI KEYWORDS
+5. FULL BLOG POST (${wordcount}+ words — all rules applied, ZERO competitor names)
+   — Question-based H2s with 40–60 word answer blocks
+   — [IMAGE 1: desc + ALT], [IMAGE 2: desc + ALT], [IMAGE 3: desc + ALT] markers placed in body
+   — Comparison table included
+   — Story paragraph, statistics, external links woven in
+6. INFOGRAPHIC CONCEPT
+7. VIDEO CONTENT IDEA (YouTube/Reels)
+8. FAQ SECTION (5–7 Q&As as JSON-LD FAQPage)
+9. AUTHOR BIO (2–3 lines, ${bd.name} editorial team)
+10. SHOPIFY TAGS (6–8 specific tags)
+11. JSON-LD SCHEMA BLOCK (Article + FAQ + HowTo if applicable)
+12. SHOPIFY PUBLISH METADATA:
+    - title: [exact title]
+    - slug: [exact slug]
+    - metaDescription: [exact meta description]
+    - tags: [comma-separated tags]
+    - author: ${bd.name} Editorial Team
+
+Write all 12 sections completely. Do not truncate.`;
+
+  const btn = document.getElementById('gen-btn');
+  btn.innerHTML = '<span class="spinner"></span>Generating...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'Generation failed');
+    }
+
+    generatedBlogText = data.text;
+    document.getElementById('output-area').textContent = generatedBlogText;
+    document.getElementById('output-card').style.display = 'block';
+
+    // Auto-parse into publish fields
+    parseIntoPublishFields(generatedBlogText, bd);
+    showToast('Blog generated! Review and publish when ready.', 'info');
+
+  } catch (err) {
+    showToast('Generation error: ' + err.message, 'error');
+    console.error(err);
+  }
+
+  btn.innerHTML = 'Generate Industry-Standard Blog Post';
+  btn.disabled = false;
+}
+
+// Auto-parse generated text into publish fields
+function parseIntoPublishFields(text, bd) {
+  // Extract slug
+  const slugMatch = text.match(/(?:SUGGESTED URL SLUG|URL SLUG)[:\s]+([^\n]+)/i);
+  if (slugMatch) document.getElementById('pub-slug').value = slugMatch[1].trim().replace(/^\//, '');
+
+  // Extract title
+  const titleMatch = text.match(/(?:SEO META TITLE|META TITLE)[:\s]+([^\n]+)/i);
+  if (titleMatch) document.getElementById('pub-title').value = titleMatch[1].trim();
+
+  // Extract meta description
+  const descMatch = text.match(/(?:META DESCRIPTION)[:\s]+([^\n]+)/i);
+  if (descMatch) document.getElementById('pub-meta-desc').value = descMatch[1].trim();
+
+  // Extract tags
+  const tagsMatch = text.match(/(?:SHOPIFY TAGS)[:\s]+([^\n]+)/i);
+  if (tagsMatch) document.getElementById('pub-tags').value = tagsMatch[1].trim();
+
+  // Set the full text as body
+  document.getElementById('pub-body').value = text;
+  document.getElementById('pub-author').value = `${bd.name} Editorial Team`;
+
+  // Update char counts
+  countChars('pub-title','title-count',60);
+  countChars('pub-meta-desc','desc-count',160);
+}
+
+function goToPublish() {
+  showView('publish', null);
+  document.querySelectorAll('.nav-item').forEach((n,i) => { if(i===1) n.classList.add('active'); else n.classList.remove('active'); });
+}
+
+function copyOutput() {
+  navigator.clipboard.writeText(generatedBlogText).then(() => showToast('Copied to clipboard!', 'info'));
+}
+
+// ═══════════════════════════════════════
+// PUBLISH TO SHOPIFY
+// ═══════════════════════════════════════
+async function publishToShopify() {
+  const title = document.getElementById('pub-title').value.trim();
+  const bodyMarkdown = document.getElementById('pub-body').value.trim();
+  const metaDescription = document.getElementById('pub-meta-desc').value.trim();
+  const urlSlug = document.getElementById('pub-slug').value.trim();
+  const author = document.getElementById('pub-author').value.trim();
+  const tags = document.getElementById('pub-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const featuredImageUrl = document.getElementById('pub-image').value.trim();
+
+  if (!title) { showToast('Please enter a SEO title before publishing', 'error'); return; }
+  if (!bodyMarkdown) { showToast('Blog body is empty', 'error'); return; }
+
+  const pubBtn = document.getElementById('pub-btn');
+  pubBtn.innerHTML = '<span class="spinner"></span>Publishing to Shopify...';
+  pubBtn.disabled = true;
+
+  try {
+    const response = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        brand: activeBrand,
+        title,
+        bodyMarkdown,
+        metaDescription,
+        urlSlug,
+        author: author || `${BRANDS_DB[activeBrand].name} Editorial Team`,
+        tags,
+        status: publishStatus,
+        featuredImageUrl: featuredImageUrl || undefined,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+    }
+
+    const resultEl = document.getElementById('publish-result');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div class="publish-result">
+        <h4>✅ ${data.status === 'published' ? 'Published Live' : 'Saved as Draft'} on ${BRANDS_DB[activeBrand].domain}</h4>
+        <div style="font-size:12px;color:#86efac;margin-top:4px;">Article ID: ${data.articleId}</div>
+        <a href="${data.adminUrl}" target="_blank">→ View in Shopify Admin</a>
+        ${data.publicUrl ? `<a href="${data.publicUrl}" target="_blank">→ View Live Post</a>` : ''}
+      </div>`;
+
+    showToast(`Blog ${data.status === 'published' ? 'published live' : 'saved as draft'} on ${BRANDS_DB[activeBrand].domain}!`, 'info');
+
+  } catch (err) {
+    showToast('Publish error: ' + err.message, 'error');
+    console.error(err);
+  }
+
+  pubBtn.innerHTML = `🚀 Publish to Shopify — ${BRANDS_DB[activeBrand].domain}`;
+  pubBtn.disabled = false;
+}
+
+// ═══════════════════════════════════════
+// LOAD PUBLISHED POSTS
+// ═══════════════════════════════════════
+async function loadPosts() {
+  const container = document.getElementById('posts-container');
+  container.innerHTML = '<div style="color:var(--text3);font-size:13px;">Loading...</div>';
+  try {
+    const res = await fetch(`/api/blogs?brand=${activeBrand}&limit=20`);
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Failed to load');
+    const articles = data.articles || [];
+    const published = articles.filter(a=>a.status==='published').length;
+    const drafts = articles.filter(a=>a.status==='draft').length;
+    document.getElementById('stat-total').textContent = articles.length;
+    document.getElementById('stat-published').textContent = published;
+    document.getElementById('stat-draft').textContent = drafts;
+    if (articles.length === 0) {
+      container.innerHTML = '<div style="color:var(--text3);font-size:13px;">No posts found. Generate and publish your first blog!</div>';
+      return;
+    }
+    container.innerHTML = `<table class="posts-table">
+      <thead><tr><th>Title</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>${articles.map(a=>`
+        <tr>
+          <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.title}</td>
+          <td><span class="status-pill ${a.status==='published'?'status-published':'status-draft'}">${a.status}</span></td>
+          <td style="color:var(--text3);font-size:11px;">${a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN') : '—'}</td>
+          <td><a href="${a.adminUrl}" target="_blank" class="link-btn">Edit in Shopify →</a></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  } catch (err) {
+    container.innerHTML = `<div style="color:#fca5a5;font-size:13px;">Error: ${err.message}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════
+const ENV_VARS = [
+  { key:'ANTHROPIC_API_KEY', desc:'Anthropic API key for blog generation', required:true },
+  { key:'SHOPIFY_100AMPERE_DOMAIN', desc:'100ampere.myshopify.com', required:true },
+  { key:'SHOPIFY_100AMPERE_TOKEN', desc:'shpat_... token from 100ampere Custom App', required:true },
+  { key:'SHOPIFY_100AMPERE_BLOG_ID', desc:'Blog ID from 100ampere Shopify', required:true },
+  { key:'SHOPIFY_CTRL8_DOMAIN', desc:'ctrl8.myshopify.com', required:true },
+  { key:'SHOPIFY_CTRL8_TOKEN', desc:'shpat_... token from ctrl8 Custom App', required:true },
+  { key:'SHOPIFY_CTRL8_BLOG_ID', desc:'120374526231 (confirmed)', required:true },
+  { key:'SHOPIFY_BLACKKEY_DOMAIN', desc:'blackkey.myshopify.com', required:true },
+  { key:'SHOPIFY_BLACKKEY_TOKEN', desc:'shpat_... token from blackkey Custom App', required:true },
+  { key:'SHOPIFY_BLACKKEY_BLOG_ID', desc:'Blog ID from blackkey Shopify', required:true },
+];
+
+function renderSettings() {
+  document.getElementById('env-checklist').innerHTML = ENV_VARS.map(v=>`
+    <div class="env-row">
+      <div>
+        <div class="env-key">${v.key}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${v.desc}</div>
+      </div>
+      <span class="env-status env-missing">Add to Vercel</span>
+    </div>`).join('');
+}
+
+async function testEndpoints() {
+  const el = document.getElementById('endpoint-status');
+  el.innerHTML = '<div style="color:var(--text2);font-size:12px;">Testing endpoints...</div>';
+  const endpoints = ['/api/generate', '/api/publish', '/api/blogs'];
+  const results = await Promise.all(endpoints.map(async ep => {
+    try {
+      const res = await fetch(ep, { method: ep === '/api/blogs' ? 'GET' : 'POST', headers:{'Content-Type':'application/json'}, body: ep !== '/api/blogs' ? JSON.stringify({}) : undefined });
+      return { ep, ok: res.status !== 404, status: res.status };
+    } catch { return { ep, ok: false, status: 'Network error' }; }
+  }));
+  el.innerHTML = results.map(r=>`
+    <div class="env-row">
+      <div class="env-key">${r.ep}</div>
+      <span class="env-status ${r.ok ? 'env-set' : 'env-missing'}">${r.ok ? '✓ Reachable' : '✗ '+r.status}</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function setStatus(s) {
+  publishStatus = s;
+  document.getElementById('status-draft').classList.toggle('active', s==='draft');
+  document.getElementById('status-published').classList.toggle('active', s==='published');
+}
+
+function countChars(inputId, countId, max) {
+  const val = document.getElementById(inputId).value.length;
+  const el = document.getElementById(countId);
+  el.textContent = `${val}/${max}`;
+  el.style.color = val > max ? '#fca5a5' : val > max*0.85 ? '#fbbf24' : 'var(--text3)';
+}
+
+function showToast(msg, type='info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+switchBrand('100ampere', document.querySelector('.brand-item'));
+renderSettings();
+</script>
+</body>
+</html>
