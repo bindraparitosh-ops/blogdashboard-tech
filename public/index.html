@@ -479,13 +479,21 @@ function checkOAuthCallback() {
   const connected = params.get('connected');
   if (brand && token && connected) {
     setToken(brand, token);
-    showToast(`✅ ${DB[brand]?.name || brand} connected to Shopify!`, 'success');
-    // Clean URL
+    // Clean URL immediately
     window.history.replaceState({}, '', '/');
-    switchBrand(brand, document.querySelector(`[data-brand="${brand}"]`));
+    // Switch to the connected brand and update UI
+    const brandEl = document.querySelector(`[data-brand="${brand}"]`);
+    switchBrand(brand, brandEl);
+    // Show success banner after a short delay so DOM is ready
+    setTimeout(() => {
+      showToast(`✅ ${DB[brand]?.name || brand} successfully connected to Shopify!`, 'success');
+      updateConnectBanner();
+    }, 100);
+    return brand; // return so init() knows which brand was connected
   }
-  // Refresh all badge states
+  // Refresh all badge states on normal load
   Object.keys(DB).forEach(b => { if (getToken(b)) updateBadge(b, true); });
+  return null;
 }
 
 // ═══════════════════════════════════════
@@ -855,8 +863,22 @@ function showView(view, navEl) {
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
-checkOAuthCallback();
-switchBrand('ctrl8', document.querySelector('[data-brand="ctrl8"]'));
+// Wait for DOM to be fully ready before initialising
+function init() {
+  const connectedBrand = checkOAuthCallback();
+  if (!connectedBrand) {
+    // Normal load — default to ctrl8
+    const startEl = document.querySelector('[data-brand="ctrl8"]');
+    switchBrand('ctrl8', startEl);
+  }
+  // If connectedBrand was set, checkOAuthCallback already called switchBrand
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
